@@ -146,24 +146,18 @@
 
   <h1>L자형 조명 시뮬레이터</h1>
 
-  <div class="presets">
-    <button class="preset-btn" data-left="1200" data-right="800">왼쪽 길게 (1200/800)</button>
-    <button class="preset-btn" data-left="800" data-right="1200">오른쪽 길게 (800/1200)</button>
-    <button class="preset-btn" data-left="1000" data-right="1000">동일 (1000/1000)</button>
-    <button class="preset-btn" data-left="1500" data-right="600">왼쪽 매우 길게 (1500/600)</button>
-  </div>
 
   <div class="controls">
     <div class="input-group">
       <label>왼쪽 조명 길이</label>
-      <input type="range" id="leftSlider" value="1200" min="200" max="2000" step="50">
-      <input type="number" id="leftLen" value="1200" min="200" max="2000" step="50">
+      <input type="range" id="leftSlider" value="1200" min="200" max="3000" step="50">
+      <input type="number" id="leftLen" value="1200" min="200" max="3000" step="50">
       <span class="unit">mm</span>
     </div>
     <div class="input-group">
       <label>오른쪽 조명 길이</label>
-      <input type="range" id="rightSlider" value="800" min="200" max="2000" step="50">
-      <input type="number" id="rightLen" value="800" min="200" max="2000" step="50">
+      <input type="range" id="rightSlider" value="800" min="200" max="3000" step="50">
+      <input type="number" id="rightLen" value="800" min="200" max="3000" step="50">
       <span class="unit">mm</span>
     </div>
   </div>
@@ -179,7 +173,7 @@
 
   <p class="info">
     조명 길이를 입력하면 ㄱ자형 천장 조명의 빛 길이가 실시간으로 변경됩니다.<br>
-    범위: 200mm ~ 2000mm
+    범위: 200mm ~ 3000mm
   </p>
 
   <script>
@@ -205,7 +199,7 @@
     // 캔버스 스케일: 800/1536 ≈ 0.5208
     // ──────────────────────────────────────────────
 
-    const MAX_MM = 2000;
+    const MAX_MM = 3000;
 
     // 원본 좌표 → 캔버스 비율로 변환
     const ORIG_W = 1536;
@@ -232,9 +226,9 @@
     const RIGHT_NX = RIGHT_DIR_X / RIGHT_DIR_LEN;
     const RIGHT_NY = RIGHT_DIR_Y / RIGHT_DIR_LEN;
 
-    // 최대 팔 길이 (px, 원본 기준 2000mm일 때)
-    const MAX_LEFT_PX = 520;   // 왼쪽 팔 최대 원본 px
-    const MAX_RIGHT_PX = 380;  // 오른쪽 팔 최대 원본 px
+    // 최대 팔 길이 (px, 원본 기준) - 양쪽 동일하게 설정
+    const MAX_LEFT_PX = 800;   // 3000mm일 때 원본 px
+    const MAX_RIGHT_PX = 800;  // 3000mm일 때 원본 px (양쪽 동일)
 
     let scale = 1;
 
@@ -246,59 +240,22 @@
       updateLighting();
     };
 
-    // 발광 라인 그리기 (여러 겹 글로우)
-    function drawGlowLine(x1, y1, x2, y2, intensity) {
-      const layers = [
-        { width: 120, alpha: 0.02 * intensity },
-        { width: 84,  alpha: 0.04 * intensity },
-        { width: 60,  alpha: 0.08 * intensity },
-        { width: 42,  alpha: 0.15 * intensity },
-        { width: 24,  alpha: 0.35 * intensity },
-        { width: 12,  alpha: 0.7  * intensity },
-        { width: 6,   alpha: 1.0  * intensity },
-      ];
-
-      layers.forEach(layer => {
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = `rgba(255, 240, 200, ${layer.alpha})`;
-        ctx.lineWidth = layer.width * scale;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-      });
-    }
-
-    // 끝점 페이드 아웃 효과
-    function drawEndFade(x, y, dirX, dirY, fadeLen) {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, fadeLen);
-      gradient.addColorStop(0, 'rgba(255, 240, 200, 0.5)');
-      gradient.addColorStop(0.5, 'rgba(255, 235, 180, 0.15)');
-      gradient.addColorStop(1, 'rgba(255, 220, 150, 0)');
+    // 조명 라인 그리기 (glow 없이 선명한 실선)
+    function drawLightLine(x1, y1, x2, y2) {
       ctx.beginPath();
-      ctx.arc(x, y, fadeLen, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-    }
-
-    // 코너 글로우
-    function drawCornerGlow(x, y) {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 20 * scale);
-      gradient.addColorStop(0, 'rgba(255, 252, 240, 1)');
-      gradient.addColorStop(0.2, 'rgba(255, 245, 220, 0.7)');
-      gradient.addColorStop(0.5, 'rgba(255, 235, 190, 0.3)');
-      gradient.addColorStop(1, 'rgba(255, 220, 150, 0)');
-      ctx.beginPath();
-      ctx.arc(x, y, 20 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = 'rgba(255, 245, 220, 1)';
+      ctx.lineWidth = 6 * scale;
+      ctx.lineCap = 'round';
+      ctx.stroke();
     }
 
     function updateLighting() {
       if (!bgImage.complete) return;
 
-      const leftMM = Math.max(200, Math.min(2000, parseInt(leftInput.value) || 200));
-      const rightMM = Math.max(200, Math.min(2000, parseInt(rightInput.value) || 200));
+      const leftMM = Math.max(200, Math.min(3000, parseInt(leftInput.value) || 200));
+      const rightMM = Math.max(200, Math.min(3000, parseInt(rightInput.value) || 200));
 
       const cw = canvas.width;
       const ch = canvas.height;
@@ -327,16 +284,9 @@
       const rightEndX = cx + RIGHT_NX * rightPx;
       const rightEndY = cy + RIGHT_NY * rightPx;
 
-      // 7) 조명 그리기
-      drawGlowLine(leftEndX, leftEndY, cx, cy, 1.0);
-      drawGlowLine(cx, cy, rightEndX, rightEndY, 1.0);
-
-      // 8) 끝점 페이드
-      drawEndFade(leftEndX, leftEndY, LEFT_NX, LEFT_NY, 15 * scale);
-      drawEndFade(rightEndX, rightEndY, RIGHT_NX, RIGHT_NY, 15 * scale);
-
-      // 9) 코너 밝은 점
-      drawCornerGlow(cx, cy);
+      // 7) 조명 그리기 (선명한 실선)
+      drawLightLine(leftEndX, leftEndY, cx, cy);
+      drawLightLine(cx, cy, rightEndX, rightEndY);
 
       // 라벨 업데이트
       labelLeft.textContent = `왼쪽: ${leftMM}mm`;
