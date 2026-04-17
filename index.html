@@ -258,8 +258,8 @@
     function updateLighting() {
       if (!bgImage.complete) return;
 
-      const leftMM = Math.max(200, Math.min(3000, parseInt(leftInput.value) || 200));
-      const rightMM = Math.max(200, Math.min(3000, parseInt(rightInput.value) || 200));
+      const leftMM = parseInt(leftInput.value) || 200;
+      const rightMM = parseInt(rightInput.value) || 200;
 
       const cw = canvas.width;
       const ch = canvas.height;
